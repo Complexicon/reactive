@@ -16,13 +16,14 @@ module.exports = function (options) {
 
 	const dest = '/' + (options.dest ? options.dest : 'bundle');
 	const reactPath = '/' + (options.reactSrc ? options.reactSrc : 'react');
-	const root = options.root;
+	const root = options.__dirname;
 
-	if (options.hotreload) {
-		options.hotreload.server.on('upgrade', (request, socket, head) => {
-			wsk.handleUpgrade(request, socket, head, socket => wsk.emit('connection', socket, request));
-		});
-	}
+	const scriptType = options.debug ? 'development' : 'production.min';
+	const reactURL = `https://unpkg.com/react@${require('react').version}/umd/react.${scriptType}.js`
+	const reactDomURL = `https://unpkg.com/react-dom@${require('react-dom').version}/umd/react-dom.${scriptType}.js`
+
+	if (options.hotreload)
+		options.hotreload.on('upgrade', (r, s, h) => wsk.handleUpgrade(r, s, h, sock => wsk.emit('connection', sock, r)));
 
 	const config = {
 		entry: root + reactPath + '/App.js',
@@ -94,10 +95,10 @@ module.exports = function (options) {
 		} else {
 			const $ = cheerio.load(fs.readFileSync(root + reactPath + '/index.html'));
 
-			const scriptType = options.debug ? 'development' : 'production.min';
 
-			$('#react').attr('src', `https://unpkg.com/react@${require('react').version}/umd/react.${scriptType}.js`)
-			$('#react-dom').attr('src', `https://unpkg.com/react-dom@${require('react-dom').version}/umd/react-dom.${scriptType}.js`)
+
+			$('#react').attr('src', reactURL)
+			$('#react-dom').attr('src', reactDomURL)
 
 			if (options.debug && options.hotreload) $('body').append("<script>new WebSocket('ws://localhost:3000').onmessage = event => event.data == 'reload' && this.window.location.reload();</script>")
 

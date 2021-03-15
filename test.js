@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const server = require('http').createServer(app);
-const reactive = require('./packReact')({ root: __dirname, debug: true, hotreload: { server } });
+const reactive = require('./packReact')({ __dirname, debug: true, hotreload: server });
 
 // logger
 app.use(require('morgan')('dev'));
